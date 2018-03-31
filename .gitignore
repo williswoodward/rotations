@@ -1,10 +1,9 @@
 .gradle/
 .idea/
-build.gradle
 build/
 gradle/
 gradlew
 gradlew.bat
 out/
 settings.gradle
-src/
+src/main/resources
