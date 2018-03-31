@@ -3,6 +3,7 @@ import javafx.util.Pair;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -20,7 +21,7 @@ public class Rotation42 {
     private List<List<Player>> _backRowOptions = new ArrayList<>();
 
     Rotation42(List<Player> players, int index) {
-        Preconditions.checkArgument(players.size() == Constants.COURT_SIZE);
+        Preconditions.checkArgument(players.size() <= Config.COURT_SIZE);
 
         _players = players;
         _index = index;
@@ -39,8 +40,8 @@ public class Rotation42 {
         return _value.round(new MathContext(4));
     }
 
-    long countFemales() {
-        return _players.stream().filter(Player::isFemale).count();
+    long countMales() {
+        return _players.stream().filter(Player::isMale).count();
     }
 
     boolean isPlayablePositions() {
@@ -58,8 +59,9 @@ public class Rotation42 {
         value = value.add(evaluateBackRow());
 
         // Falloff for less likely rotations
-        if (_index > Constants.EXPECTED_NUM_ROTATIONS) {
-            BigDecimal modifier = new BigDecimal((10 + Constants.EXPECTED_NUM_ROTATIONS - _index)).divide(BigDecimal.TEN);
+        if (_index > Config.EXPECTED_NUM_ROTATIONS) {
+            BigDecimal modifier = new BigDecimal((10 + (Config.EXPECTED_NUM_ROTATIONS - (_index)) * 2)).setScale(3, RoundingMode.HALF_UP)
+                    .divide(BigDecimal.TEN, RoundingMode.HALF_UP);
             if (modifier.compareTo(BigDecimal.ZERO) < 0) {
                 modifier = BigDecimal.ZERO;
             }
@@ -67,7 +69,7 @@ public class Rotation42 {
             value = value.multiply(modifier);
         }
 
-        return value;
+        return value.setScale(3, RoundingMode.HALF_UP);
     }
 
     private List<Player> getFrontRow() {
@@ -75,7 +77,7 @@ public class Rotation42 {
     }
 
     private List<Player> getBackRow() {
-        return _players.subList(3, Constants.COURT_SIZE);
+        return _players.subList(3, _players.size());
     }
 
     private void generateFrontRowOptions(List<Player> row) {
@@ -137,7 +139,7 @@ public class Rotation42 {
 
         // Compound lack of serve receive
         if (lackingReceivers(getBackRow())) {
-            total = total.multiply(Constants.DEFENSE_COMPOUND_PENALTY);
+            total = total.multiply(Config.DEFENSE_COMPOUND_PENALTY);
         }
 
         return total;
@@ -164,7 +166,7 @@ public class Rotation42 {
 
         // Compound lack of offense
         if (lackingHitters(option)) {
-            total = total.multiply(Constants.OFFENSE_COMPOUND_PENALTY);
+            total = total.multiply(Config.OFFENSE_COMPOUND_PENALTY);
         }
 
         return total;
@@ -194,17 +196,17 @@ public class Rotation42 {
     }
 
     private BigDecimal evaluateMiddle(Player player) {
-        BigDecimal block = player.getBlk().multiply(Constants.WT_MIDDLE_BLK);
+        BigDecimal block = player.getBlk().multiply(Config.WT_MIDDLE_BLK);
         // Adjust for expected opponent big hit rotations
-        if (Arrays.stream(Constants.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
+        if (Arrays.stream(Config.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
             block = block.multiply(new BigDecimal(2));
         }
-        return block.add(player.getHit().multiply(Constants.WT_MIDDLE_HIT));
+        return block.add(player.getHit().multiply(Config.WT_MIDDLE_HIT));
     }
 
     private BigDecimal evaluateOutside(Player player) {
-        return player.getBlk().multiply(Constants.WT_OUTSIDE_BLK)
-                .add(player.getHit().multiply(Constants.WT_OUTSIDE_HIT));
+        return player.getBlk().multiply(Config.WT_OUTSIDE_BLK)
+                .add(player.getHit().multiply(Config.WT_OUTSIDE_HIT));
     }
 
     private BigDecimal evaluateSetter(Player player) {
@@ -212,32 +214,32 @@ public class Rotation42 {
     }
 
     private BigDecimal evaluateBackLeft(Player player) {
-        BigDecimal dig = player.getDig().multiply(Constants.WT_BACKLEFT_DIG);
-        if (Arrays.stream(Constants.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
+        BigDecimal dig = player.getDig().multiply(Config.WT_BACKLEFT_DIG);
+        if (Arrays.stream(Config.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
             dig = dig.multiply(new BigDecimal(2));
         }
 
-        return dig.add(player.getRcv().multiply(Constants.WT_BACKLEFT_RCV))
-                .add(player.getPass().multiply(Constants.WT_BACKLEFT_PASS));
+        return dig.add(player.getRcv().multiply(Config.WT_BACKLEFT_RCV))
+                .add(player.getPass().multiply(Config.WT_BACKLEFT_PASS));
     }
 
     private BigDecimal evaluateBackMid(Player player) {
-        return player.getDig().multiply(Constants.WT_BACKMID_DIG)
-                .add(player.getRcv().multiply(Constants.WT_BACKMID_RCV))
-                .add(player.getPass().multiply(Constants.WT_BACKMID_PASS));
+        return player.getDig().multiply(Config.WT_BACKMID_DIG)
+                .add(player.getRcv().multiply(Config.WT_BACKMID_RCV))
+                .add(player.getPass().multiply(Config.WT_BACKMID_PASS));
     }
 
     private BigDecimal evaluateBackRight(Player player) {
-        return player.getDig().multiply(Constants.WT_BACKRIGHT_DIG)
-                .add(player.getRcv().multiply(Constants.WT_BACKRIGHT_RCV))
-                .add(player.getPass().multiply(Constants.WT_BACKRIGHT_PASS))
+        return player.getDig().multiply(Config.WT_BACKRIGHT_DIG)
+                .add(player.getRcv().multiply(Config.WT_BACKRIGHT_RCV))
+                .add(player.getPass().multiply(Config.WT_BACKRIGHT_PASS))
                 .add(player.getSrv());
     }
 
     private boolean lackingHitters(List<Pair<Player, Position>> option) {
         for (Pair<Player, Position> playerAssignment : option) {
             if ((playerAssignment.getValue() == Position.MIDDLE || playerAssignment.getValue() == Position.OUTSIDE)
-                    && playerAssignment.getKey().getHit().compareTo(Constants.HIT_BASELINE) > 0) {
+                    && playerAssignment.getKey().getHit().compareTo(Config.HIT_BASELINE) > 0) {
                 return false;
             }
         }
@@ -247,8 +249,8 @@ public class Rotation42 {
 
     private boolean lackingReceivers(List<Player> backRow) {
         for (int i = 0; i < backRow.size(); i++) {
-            if (backRow.get(i).getRcv().compareTo(Constants.RCV_BASELINE) < 0 && i + 1 < backRow.size()) {
-                if (backRow.get(i + 1).getRcv().compareTo(Constants.RCV_BASELINE) < 0) {
+            if (backRow.get(i).getRcv().compareTo(Config.RCV_BASELINE) < 0 && i + 1 < backRow.size()) {
+                if (backRow.get(i + 1).getRcv().compareTo(Config.RCV_BASELINE) < 0) {
                     return true;
                 }
             }

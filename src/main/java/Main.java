@@ -17,22 +17,6 @@ import java.io.InputStreamReader;
 import java.util.*;
 
 public class Main {
-
-    // MATCH VARIABLES
-    private static Player[] _players = {
-            new Player("Andrew", false, Position.OUTSIDE, Position.MIDDLE),
-            new Player("Avi", false, Position.MIDDLE, Position.OUTSIDE),
-            new Player("Chris", false, Position.OUTSIDE),
-            new Player("Denise", true, Position.OUTSIDE, Position.SETTER),
-//            new Player("Dennis", false, Position.OUTSIDE, Position.MIDDLE),
-            new Player("Hoff", false, Position.MIDDLE),
-//            new Player("Jiyu", true, Position.SETTER),
-//            new Player("Katie", true, Position.SETTER),
-            new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
-//            new Player("Regena", true, Position.SETTER),
-            new Player("Sue", true, Position.SETTER)
-    };
-
     // SHEET VARIABLES
     private static Sheets _sheets;
 
@@ -56,7 +40,7 @@ public class Main {
         }
     }
 
-    private static List<LineupSingleSide42> _best_lineups = new ArrayList<>();
+    private static List<Lineup42> _best_lineups = new ArrayList<>();
     private static int _search_count = 0;
 
     /**
@@ -65,19 +49,18 @@ public class Main {
     public static void main(String[] args) throws IOException {
         // Build a new authorized API client service.
         _sheets = getSheetsService();
-
         getPlayerDataFromSheets();
-        searchAllLineups(Arrays.asList(_players), 0);
+        searchAllLineups(Arrays.asList(Config._players), 0);
 
         System.out.println("\nTOP LINEUPS");
         System.out.println("-----------");
-        for (LineupSingleSide42 lineup : _best_lineups) {
+        for (Lineup42 lineup : _best_lineups) {
             System.out.println("\n" + lineup);
         }
     }
 
     private static void getPlayerDataFromSheets() throws IOException {
-        for (Player player : _players) {
+        for (Player player : Config._players) {
             player.initData(_sheets);
         }
     }
@@ -99,15 +82,18 @@ public class Main {
     }
 
     private static void createAndSearchLineup(List<Player> players) {
-        LineupSingleSide42 lineup = new LineupSingleSide42(players);
-        if (_best_lineups.size() < Constants.NUM_LINEUPS) {
-            _best_lineups.add(new LineupSingleSide42(lineup));
-            _best_lineups.sort(Comparator.comparing(LineupSingleSide42::getValue).reversed());
-        } else if (lineup.getValue().compareTo(_best_lineups.get(_best_lineups.size() -1).getValue()) > 0) {
+        Lineup42 lineup = new Lineup42(players);
+        if (_best_lineups.size() < Config.NUM_LINEUPS) {
+            _best_lineups.add(new Lineup42(lineup));
+            _best_lineups.sort(Comparator.comparing(Lineup42::getValue).reversed());
+        } else if (lineup.getValue().compareTo(_best_lineups.get(_best_lineups.size() - 1).getValue()) > 0) {
             _best_lineups.remove(_best_lineups.size() -1);
-            _best_lineups.add(new LineupSingleSide42(lineup));
-            _best_lineups.sort(Comparator.comparing(LineupSingleSide42::getValue).reversed());
+            _best_lineups.add(new Lineup42(lineup));
+            _best_lineups.sort(Comparator.comparing(Lineup42::getValue).reversed());
         }
+
+        // DEBUG: Uncomment!
+        System.out.println(lineup);
     }
 
 

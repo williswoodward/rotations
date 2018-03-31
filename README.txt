@@ -9,3 +9,5 @@ Also, make sure to update the sourceCompatibility and targetCompatibility to 1.8
 Once you've completed these steps, run the following from your base working directory to run the app:
 
 gradle -q run
+
+(You can safely ignore the warnings about being unable to change permissions for everybody/owner. Pretty sure it's a bug on the Google side.)
