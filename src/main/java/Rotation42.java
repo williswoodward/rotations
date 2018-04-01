@@ -10,8 +10,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Rotation42 {
-    private List<Player> _players;
-    private int _index;
+    private final List<Player> _players;
+    private final int _index;
 
     private BigDecimal _value = BigDecimal.ZERO;
 
@@ -40,8 +40,12 @@ public class Rotation42 {
         return _value.round(new MathContext(4));
     }
 
-    long countMales() {
-        return _players.stream().filter(Player::isMale).count();
+    int countFemales() {
+        return (int) _players.stream().filter(Player::isFemale).count();
+    }
+
+    int countMales() {
+        return (int) _players.stream().filter(e -> !e.isFemale()).count();
     }
 
     boolean isPlayablePositions() {
@@ -199,7 +203,7 @@ public class Rotation42 {
         BigDecimal block = player.getBlk().multiply(Config.WT_MIDDLE_BLK);
         // Adjust for expected opponent big hit rotations
         if (Arrays.stream(Config.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
-            block = block.multiply(new BigDecimal(2));
+            block = block.multiply(Config.WT_MIDDLE_STRONG_OPP);
         }
         return block.add(player.getHit().multiply(Config.WT_MIDDLE_HIT));
     }
@@ -216,7 +220,7 @@ public class Rotation42 {
     private BigDecimal evaluateBackLeft(Player player) {
         BigDecimal dig = player.getDig().multiply(Config.WT_BACKLEFT_DIG);
         if (Arrays.stream(Config.STRONG_OPP_HIT_ROTATIONS).anyMatch(e -> e == _index)) {
-            dig = dig.multiply(new BigDecimal(2));
+            dig = dig.multiply(Config.WT_BACKLEFT_STRONG_OPP);
         }
 
         return dig.add(player.getRcv().multiply(Config.WT_BACKLEFT_RCV))

@@ -26,18 +26,18 @@ final class Config {
 
     // Match Config
     static Player[] _players = {
-            new Player("Andrew", true, Position.MIDDLE, Position.OUTSIDE)
+            new Player("Andrew", false, Position.MIDDLE, Position.OUTSIDE, Position.SETTER)
                 .withBlk(new BigDecimal(0.15)),
-            new Player("Avi", true, Position.MIDDLE, Position.OUTSIDE),
-            new Player("Chris", true, Position.OUTSIDE),
-            new Player("Denise", false, Position.OUTSIDE, Position.SETTER),
-//            new Player("Dennis", true, Position.OUTSIDE, Position.MIDDLE),
-            new Player("Hoff", true, Position.MIDDLE),
-//            new Player("Jiyu", false, Position.SETTER),
-//            new Player("Katie", false, Position.SETTER),
-            new Player("Mark", true, Position.OUTSIDE, Position.SETTER),
-//            new Player("Regena", false, Position.MIDDLE, Position.OUTSIDE, Position.SETTER),
-            new Player("Sue",false, Position.SETTER)
+            new Player("Avi", false, Position.MIDDLE, Position.OUTSIDE),
+            new Player("Chris", false, Position.OUTSIDE),
+            new Player("Denise", true, Position.OUTSIDE, Position.SETTER),
+//            new Player("Dennis", false, Position.OUTSIDE, Position.MIDDLE),
+            new Player("Hoff", false, Position.MIDDLE),
+//            new Player("Jiyu", true, Position.SETTER),
+//            new Player("Katie", true, Position.SETTER),
+            new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
+//            new Player("Regena", true, Position.MIDDLE, Position.OUTSIDE, Position.SETTER),
+            new Player("Sue", true, Position.SETTER)
     };
 
     static final int[] STRONG_OPP_HIT_ROTATIONS = {0, 1, 2, 7, 8, 9};
@@ -48,6 +48,7 @@ final class Config {
 
     static final BigDecimal WT_MIDDLE_BLK = new BigDecimal(1);
     static final BigDecimal WT_MIDDLE_HIT = new BigDecimal(0.5);
+    static final BigDecimal WT_MIDDLE_STRONG_OPP = new BigDecimal(3);
 
     static final BigDecimal WT_OUTSIDE_HIT = new BigDecimal(0.8);
     static final BigDecimal WT_OUTSIDE_BLK = new BigDecimal(0.2);
@@ -55,6 +56,7 @@ final class Config {
     static final BigDecimal WT_BACKLEFT_DIG = new BigDecimal(0.6);
     static final BigDecimal WT_BACKLEFT_PASS = new BigDecimal(0.3);
     static final BigDecimal WT_BACKLEFT_RCV = new BigDecimal(0.3);
+    static final BigDecimal WT_BACKLEFT_STRONG_OPP = new BigDecimal(2);
 
     static final BigDecimal WT_BACKMID_DIG = new BigDecimal(0.1);
     static final BigDecimal WT_BACKMID_PASS = new BigDecimal(0.1);
@@ -70,6 +72,8 @@ final class Config {
 
     static final int EXPECTED_NUM_ROTATIONS = 9;
     static final int MAX_ROTATIONS = 14;
+
+    static final boolean MINIMIZE_SWAPPING = true;
 
     // Court Config
     static final int COURT_SIZE = 6;

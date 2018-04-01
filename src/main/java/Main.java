@@ -93,7 +93,7 @@ public class Main {
         }
 
         // DEBUG: Uncomment!
-        System.out.println(lineup);
+//        System.out.println(lineup);
     }
 
 

@@ -5,22 +5,21 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 
 public class Player {
-    private String _name;
-    private boolean _isMale;
-    private Position[] _positions;
+    private final String _name;
+    private final boolean _isFemale;
+    private final Position[] _positions;
 
     private BigDecimal _srv;
     private BigDecimal _hit;
     private BigDecimal _set;
     private BigDecimal _rcv;
     private BigDecimal _blk;
-
     private BigDecimal _dig;
     private BigDecimal _pass;
 
-    Player(String name, boolean isMale, Position... positions) {
+    Player(String name, boolean isFemale, Position... positions) {
         _name = name;
-        _isMale = isMale;
+        _isFemale = isFemale;
         _positions = positions;
     }
 
@@ -28,8 +27,8 @@ public class Player {
         return _positions;
     }
 
-    boolean isMale() {
-        return _isMale;
+    boolean isFemale() {
+        return _isFemale;
     }
 
     void initData(Sheets sheets) throws IOException {

@@ -9,7 +9,7 @@ class Lineup42 {
     private BigDecimal _value;
     private List<Rotation42> _rotations;
 
-    private List<Player> _players;
+    private final List<Player> _players;
     private List<Player> _playerBuffer;
     private int[] _nextOut = new int[Config.NUM_ROTATION_SIDES];
     private int[] _nextIn = new int[Config.NUM_ROTATION_SIDES];
@@ -33,48 +33,59 @@ class Lineup42 {
         return _value.setScale(3, RoundingMode.HALF_UP);
     }
 
+    private int countFemales() {
+        return (int) _playerBuffer.stream().filter(Player::isFemale).count();
+    }
+
     private BigDecimal generateValue() {
         BigDecimal sum = BigDecimal.ZERO;
         if (_rotations != null) {
             for (Rotation42 rotation : _rotations) {
                 sum = sum.add(rotation.getValue());
             }
+
+            return sum.divide(new BigDecimal(_rotations.size()), RoundingMode.HALF_UP);
         }
 
-        return sum;
+        return BigDecimal.ZERO;
     }
 
     private List<Rotation42> createRotations() {
-        Rotation42 starting = getSingleRotation(0);
+        final Rotation42 starting = getOneRotation(0);
 
-        if (starting.countMales() > Config.MAX_MALES) {
+        int starting_females = starting.countFemales();
+        if (starting_females < countFemales() && starting_females < (Config.COURT_SIZE - Config.MAX_MALES)) {
             return null;
         }
 
         List<Rotation42> rotations = new ArrayList<>();
         for (int i = 0; i < Config.MAX_ROTATIONS; i++) {
-            Rotation42 rotation = getSingleRotation(i);
+            Rotation42 rotation = getOneRotation(i);
 
             if (!rotation.isPlayablePositions()) return null;
 
             if (i > 0 && rotation.isEquivalentTo(starting)) break;
 
             rotations.add(rotation);
-            maxMales(rotation);
+            enforceMaxMales(rotation);
         }
 
         return rotations;
     }
 
-    private Rotation42 getSingleRotation(int index) {
-        int full_rotation_size = _playerBuffer.size() < Config.COURT_SIZE ? _playerBuffer.size() : Config.COURT_SIZE;
-        int sub_rotation_size = full_rotation_size/Config.NUM_ROTATION_SIDES;
+    private Rotation42 getOneRotation(int index) {
+        int max_rotation_size = (int) (Config.MAX_MALES + countFemales());
+        if (max_rotation_size > Config.COURT_SIZE) {
+            max_rotation_size = Config.COURT_SIZE;
+        }
+        final int full_rotation_size = _playerBuffer.size() < max_rotation_size ? _playerBuffer.size() : max_rotation_size;
+        final int sub_rotation_size = full_rotation_size/Config.NUM_ROTATION_SIDES;
 
-        int[] starts = getSubRotationStarts(full_rotation_size, sub_rotation_size);
+        final int[] startPositions = getRotationStartPositions(full_rotation_size, sub_rotation_size);
 
         List<Player> rotationPlayers = new ArrayList<>();
         for (int i = 0; i < Config.NUM_ROTATION_SIDES; i++) {
-            int from = (index + starts[i]) % _playerBuffer.size();
+            final int from = wrap(index + startPositions[i]);
             int to = from + sub_rotation_size;
             int remainder = 0;
 
@@ -83,23 +94,22 @@ class Lineup42 {
                 to = _playerBuffer.size();
             }
 
+            _nextOut[i] = from;
+            _nextIn[i] = wrap(to);
+
             rotationPlayers.addAll(_playerBuffer.subList(from, to));
-            _nextIn[i] = to % _playerBuffer.size();
             if (remainder > 0) {
                 rotationPlayers.addAll(_playerBuffer.subList(0, remainder));
                 _nextIn[i] = remainder;
             }
-
-            _nextOut[i] = from;
         }
 
         return new Rotation42(rotationPlayers, index);
     }
 
-    private int[] getSubRotationStarts(int rotationSize, int sub_rotation_size) {
+    private int[] getRotationStartPositions(int rotationSize, int sub_rotation_size) {
         int[] starts = new int[Config.NUM_ROTATION_SIDES];
-
-        int num_players_off_per_side = (_playerBuffer.size() - rotationSize) / Config.NUM_ROTATION_SIDES;
+        final int num_players_off_per_side = (_playerBuffer.size() - rotationSize) / Config.NUM_ROTATION_SIDES;
 
         if (num_players_off_per_side < 0) {
             for (int i = 0; i < starts.length; i++) {
@@ -110,7 +120,6 @@ class Lineup42 {
         }
 
         int num_players_off_remainder = (_playerBuffer.size() - rotationSize) % Config.NUM_ROTATION_SIDES;
-
         int pos = 0;
 
         for (int i = 0; i < starts.length; i++) {
@@ -130,24 +139,31 @@ class Lineup42 {
         return starts;
     }
 
-    private void maxMales(Rotation42 rotation) {
+    private void enforceMaxMales(Rotation42 rotation) {
+        if (Config.MINIMIZE_SWAPPING) {
+            final int female_divisor = Config.COURT_SIZE / (Config.COURT_SIZE - Config.MAX_MALES);
+            if (countFemales() * female_divisor >= _playerBuffer.size()) {
+                return;
+            }
+        }
+
         int femalesLeaving = 0;
         int femalesArriving = 0;
 
         for (int nextOut : _nextOut) {
-            if (!_playerBuffer.get(nextOut).isMale()) {
+            if (_playerBuffer.get(nextOut).isFemale()) {
                 femalesLeaving++;
             }
         }
 
         for (int nextIn : _nextIn) {
-            if (!_playerBuffer.get(nextIn).isMale()) {
+            if (_playerBuffer.get(nextIn).isFemale()) {
                 femalesArriving++;
             }
         }
 
         int femalesLost = femalesLeaving - femalesArriving;
-        long femalesNeeded = rotation.countMales() + femalesLost - Config.MAX_MALES;
+        int femalesNeeded = rotation.countMales() + femalesLost - Config.MAX_MALES;
 
         if (femalesNeeded > 0) {
             // Find next closest Female(s)
@@ -155,23 +171,21 @@ class Lineup42 {
             for (int nextIn : _nextIn) {
                 int next = nextIn;
                 int steps = 0;
-                while (_playerBuffer.get(next).isMale()) {
+                while (!_playerBuffer.get(next).isFemale()) {
                     next = wrap(next + 1);
                     steps++;
                 }
                 femalesToAdvance.add(new Pair<>(_playerBuffer.get(next), steps));
             }
 
-            femalesToAdvance.sort(new Comparator<Pair<Player, Integer>>() {
-                @Override
-                public int compare(Pair<Player, Integer> p1, Pair<Player, Integer> p2) {
-                    int compareSteps = p1.getValue().compareTo(p2.getValue());
+            // If there are multiple, sort by: proximity, value
+            femalesToAdvance.sort((f1, f2) -> {
+                int compareSteps = f1.getValue().compareTo(f2.getValue());
 
-                    if (compareSteps == 0) {
-                        return p2.getKey().getValue().compareTo(p1.getKey().getValue());
-                    } else {
-                        return compareSteps;
-                    }
+                if (compareSteps == 0) {
+                    return f2.getKey().getValue().compareTo(f1.getKey().getValue());
+                } else {
+                    return compareSteps;
                 }
             });
 

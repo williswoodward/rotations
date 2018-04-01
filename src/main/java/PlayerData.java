@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 import java.util.List;
 
 class PlayerData {
-    private List<List<Object>> _sheetValues;
+    private final List<List<Object>> _sheetValues;
 
     PlayerData(Sheets sheets, String playerName) throws IOException {
         _sheetValues = sheets.spreadsheets().values()
