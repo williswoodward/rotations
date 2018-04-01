@@ -6,7 +6,7 @@ import java.math.RoundingMode;
 
 public class Player {
     private String _name;
-    private boolean _isFemale;
+    private boolean _isMale;
     private Position[] _positions;
 
     private BigDecimal _srv;
@@ -14,91 +14,159 @@ public class Player {
     private BigDecimal _set;
     private BigDecimal _rcv;
     private BigDecimal _blk;
+
     private BigDecimal _dig;
     private BigDecimal _pass;
 
-    Player(String name, boolean isFemale, Position... positions) {
+    Player(String name, boolean isMale, Position... positions) {
         _name = name;
-        _isFemale = isFemale;
+        _isMale = isMale;
         _positions = positions;
     }
 
     Position[] getPositions() {
         return _positions;
     }
-    
-    boolean isFemale() {
-        return _isFemale;
+
+    boolean isMale() {
+        return _isMale;
     }
 
     void initData(Sheets sheets) throws IOException {
         System.out.printf("Importing player: %s...\n", _name);
-        DataColumn data = new DataColumn(sheets, _name);
-        
-        _srv = data.getSrv();
-        System.out.print("Serve: " + _srv + " -> ");
-        _srv = _srv.divide(Constants.SRV_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_srv);
+        PlayerData data = new PlayerData(sheets, _name);
 
-        _hit = data.getHit();
-        System.out.print("Hit: " + _hit + " -> ");
-        _hit = _hit.divide(Constants.HIT_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_hit);
+        if (_srv == null) {
+            BigDecimal srv = data.getSrv();
+            System.out.print("Serve: " + srv + " -> ");
+            withSrv(srv);
+            System.out.println(_srv);
+        } else {
+            System.out.println("!Serve: " + _srv);
+        }
 
-        _set = data.getSet();
-        System.out.print("Set: " + _set + " -> ");
-        _set = _set.divide(Constants.SET_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_set);
+        if (_hit == null) {
+            BigDecimal hit = data.getHit();
+            System.out.print("Hit: " + hit + " -> ");
+            withHit(hit);
+            System.out.println(_hit);
+        } else {
+            System.out.println("!Hit: " + _hit);
+        }
 
-        _rcv = data.getRcv();
-        System.out.print("Receive: " + _rcv + " -> ");
-        _rcv = _rcv.divide(Constants.RCV_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_rcv);
+        if (_set == null) {
+            BigDecimal set = data.getSet();
+            System.out.print("Set: " + set + " -> ");
+            withSet(set);
+            System.out.println(_set);
+        } else {
+            System.out.println("!Set: " + _set);
+        }
 
-        _blk = data.getBlk();
-        System.out.print("Block: " + _blk + " -> ");
-        _blk = _blk.divide(Constants.BLK_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_blk);
+        if (_rcv == null) {
+            BigDecimal rcv = data.getRcv();
+            System.out.print("Receive: " + rcv + " -> ");
+            withRcv(rcv);
+            System.out.println(_rcv);
+        } else {
+            System.out.println("!Receive: " + _rcv);
+        }
 
-        _dig = data.getDig();
-        System.out.print("Dig: " + _dig + " -> ");
-        _dig = _dig.divide(Constants.DIG_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_dig);
+        if (_blk == null) {
+            BigDecimal blk = data.getBlk();
+            System.out.print("Block: " + blk + " -> ");
+            withBlk(blk);
+            System.out.println(_blk);
+        } else {
+            System.out.println("!Block: " + _blk);
+        }
 
-        _pass = data.getPass();
-        System.out.print("Pass: " + _pass + " -> ");
-        _pass = _pass.divide(Constants.PASS_OPTIMAL, RoundingMode.HALF_DOWN).setScale(3, RoundingMode.HALF_DOWN);
-        System.out.println(_pass + "\n");
+        if (_dig == null) {
+            BigDecimal dig = data.getDig();
+            System.out.print("Dig: " + dig + " -> ");
+            withDig(dig);
+            System.out.println(_dig);
+        } else {
+            System.out.println("!Dig: " + _dig);
+        }
+
+        if (_pass == null) {
+            BigDecimal pass = data.getPass();
+            System.out.print("Pass: " + pass + " -> ");
+            withPass(pass);
+            System.out.println(_pass + "\n");
+        } else {
+            System.out.println("!Pass: " + _pass);
+        }
     }
 
-    public BigDecimal getSrv() {
+    BigDecimal getSrv() {
         return _srv;
     }
 
-    public BigDecimal getHit() {
+    Player withSrv(BigDecimal rawSrv) {
+        _srv = rawSrv.divide(Config.SRV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getHit() {
         return _hit;
     }
 
-    public BigDecimal getSet() {
+    Player withHit(BigDecimal rawHit) {
+        _hit = rawHit.divide(Config.HIT_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getSet() {
         return _set;
     }
 
-    public BigDecimal getRcv() {
+    Player withSet(BigDecimal rawSet) {
+        _set = rawSet.divide(Config.SET_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getRcv() {
         return _rcv;
     }
 
-    public BigDecimal getBlk() {
+    Player withRcv(BigDecimal rawRcv) {
+        _rcv = rawRcv.divide(Config.RCV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getBlk() {
         return _blk;
     }
 
-    public BigDecimal getDig() {
+    Player withBlk(BigDecimal rawBlk) {
+        _blk = rawBlk.divide(Config.BLK_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getDig() {
         return _dig;
     }
 
-    public BigDecimal getPass() {
+    Player withDig(BigDecimal rawDig) {
+        _dig = rawDig.divide(Config.DIG_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getPass() {
         return _pass;
     }
 
+    Player withPass(BigDecimal rawPass) {
+        _pass = rawPass.divide(Config.PASS_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        return this;
+    }
+
+    BigDecimal getValue() {
+        return _srv.add(_hit).add(_set).add(_rcv).add(_blk).add(_dig).add(_pass);
+    }
+    
     @Override
     public String toString() {
         StringBuilder str = new StringBuilder(_name + "(");
