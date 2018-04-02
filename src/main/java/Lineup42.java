@@ -64,8 +64,6 @@ class Lineup42 {
 
             if (!rotation.isPlayablePositions()) return null;
 
-            if (i > 0 && rotation.isEquivalentTo(starting)) break;
-
             rotations.add(rotation);
             enforceMaxMales(rotation);
         }

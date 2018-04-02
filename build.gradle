@@ -1,17 +1,22 @@
 apply plugin: 'java'
 apply plugin: 'application'
+apply plugin: 'war'
+apply from: 'https://raw.github.com/akhikhl/gretty/master/pluginScripts/gretty.plugin'
 
 mainClassName = 'Main'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
-version = '1.0'
+version = '1.1'
 
 repositories {
     mavenCentral()
+    jcenter()
 }
 
 dependencies {
     compile 'com.google.api-client:google-api-client:1.23.0'
     compile 'com.google.oauth-client:google-oauth-client-jetty:1.23.0'
     compile 'com.google.apis:google-api-services-sheets:v4-rev513-1.23.0'
+
+    providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 }

@@ -66,7 +66,7 @@ class PlayerData {
         }
 
         if (total < Config.DATA_MIN) {
-            System.out.print("*");
+            Main._import_str.append("*");
             return baseline.setScale(3, RoundingMode.HALF_UP);
         } else {
             return new BigDecimal(pctObj.toString());

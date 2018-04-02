@@ -7,3 +7,4 @@ gradlew.bat
 out/
 settings.gradle
 src/main/resources
+ngrok.exe

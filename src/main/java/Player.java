@@ -23,6 +23,10 @@ public class Player {
         _positions = positions;
     }
 
+    String getName() {
+        return _name;
+    }
+
     Position[] getPositions() {
         return _positions;
     }
@@ -32,133 +36,196 @@ public class Player {
     }
 
     void initData(Sheets sheets) throws IOException {
-        System.out.printf("Importing player: %s...\n", _name);
+        Main._import_str.append("\nImported player: ").append(toString()).append("\n");
         PlayerData data = new PlayerData(sheets, _name);
 
-        if (_srv == null) {
-            BigDecimal srv = data.getSrv();
-            System.out.print("Serve: " + srv + " -> ");
-            withSrv(srv);
-            System.out.println(_srv);
-        } else {
-            System.out.println("!Serve: " + _srv);
+        if (_srv != null) Main._import_str.append("!Serve: ").append(getSrv()).append(" -> ").append(getSrvNormalized()).append("\n");
+        else {
+            withSrv(data.getSrv());
+            Main._import_str.append("Serve: ").append(getSrv()).append(" -> ").append(getSrvNormalized()).append("\n");
         }
 
-        if (_hit == null) {
-            BigDecimal hit = data.getHit();
-            System.out.print("Hit: " + hit + " -> ");
-            withHit(hit);
-            System.out.println(_hit);
-        } else {
-            System.out.println("!Hit: " + _hit);
+        if (_hit != null) Main._import_str.append("!Hit: ").append(getHit()).append(" -> ").append(getHitNormalized()).append("\n");
+        else {
+            withHit(data.getHit());
+            Main._import_str.append("Hit: ").append(getHit()).append(" -> ").append(getHitNormalized()).append("\n");
         }
 
-        if (_set == null) {
-            BigDecimal set = data.getSet();
-            System.out.print("Set: " + set + " -> ");
-            withSet(set);
-            System.out.println(_set);
-        } else {
-            System.out.println("!Set: " + _set);
+        if (_set != null) Main._import_str.append("!Set: ").append(getSet()).append(" -> ").append(getSetNormalized()).append("\n");
+        else {
+            withSet(data.getSet());
+            Main._import_str.append("Set: ").append(getSet()).append(" -> ").append(getSetNormalized()).append("\n");
         }
 
-        if (_rcv == null) {
-            BigDecimal rcv = data.getRcv();
-            System.out.print("Receive: " + rcv + " -> ");
-            withRcv(rcv);
-            System.out.println(_rcv);
-        } else {
-            System.out.println("!Receive: " + _rcv);
+        if (_rcv != null) Main._import_str.append("!Receive: ").append(getRcv()).append(" -> ").append(getRcvNormalized()).append("\n");
+        else {
+            withRcv(data.getRcv());
+            Main._import_str.append("Receive: ").append(getRcv()).append(" -> ").append(getRcvNormalized()).append("\n");
+        }
+        
+        if (_blk != null) Main._import_str.append("!Block: ").append(getBlk()).append(" -> ").append(getBlkNormalized()).append("\n");
+        else {
+            withBlk(data.getBlk());
+            Main._import_str.append("Block: ").append(getBlk()).append(" -> ").append(getBlkNormalized()).append("\n");
         }
 
-        if (_blk == null) {
-            BigDecimal blk = data.getBlk();
-            System.out.print("Block: " + blk + " -> ");
-            withBlk(blk);
-            System.out.println(_blk);
-        } else {
-            System.out.println("!Block: " + _blk);
+        if (_dig != null) Main._import_str.append("!Dig: ").append(getDig()).append(" -> ").append(getDigNormalized()).append("\n");
+        else {
+            withDig(data.getDig());
+            Main._import_str.append("Dig: ").append(getDig()).append(" -> ").append(getDigNormalized()).append("\n");
         }
 
-        if (_dig == null) {
-            BigDecimal dig = data.getDig();
-            System.out.print("Dig: " + dig + " -> ");
-            withDig(dig);
-            System.out.println(_dig);
-        } else {
-            System.out.println("!Dig: " + _dig);
-        }
-
-        if (_pass == null) {
-            BigDecimal pass = data.getPass();
-            System.out.print("Pass: " + pass + " -> ");
-            withPass(pass);
-            System.out.println(_pass + "\n");
-        } else {
-            System.out.println("!Pass: " + _pass);
+        if (_pass != null) Main._import_str.append("!Pass: ").append(getPass()).append(" -> ").append(getPassNormalized()).append("\n");
+        else {
+            withPass(data.getPass());
+            Main._import_str.append("Pass: ").append(getPass()).append(" -> ").append(getPassNormalized()).append("\n");
         }
     }
 
     BigDecimal getSrv() {
-        return _srv;
+        if (_srv != null) {
+            return _srv.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withSrv(BigDecimal rawSrv) {
-        _srv = rawSrv.divide(Config.SRV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getSrvNormalized() {
+        if (_srv != null) {
+            return _srv.divide(Config.SRV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withSrv(BigDecimal srv) {
+        _srv = srv;
         return this;
     }
 
     BigDecimal getHit() {
-        return _hit;
+        if (_hit != null) {
+            return _hit.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withHit(BigDecimal rawHit) {
-        _hit = rawHit.divide(Config.HIT_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getHitNormalized() {
+        if (_hit != null) {
+            return _hit.divide(Config.HIT_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withHit(BigDecimal hit) {
+        _hit = hit;
         return this;
     }
 
     BigDecimal getSet() {
-        return _set;
+        if (_set != null) {
+            return _set.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withSet(BigDecimal rawSet) {
-        _set = rawSet.divide(Config.SET_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getSetNormalized() {
+        if (_set != null) {
+            return _set.divide(Config.SET_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withSet(BigDecimal set) {
+        _set = set;
         return this;
     }
 
     BigDecimal getRcv() {
-        return _rcv;
+        if (_rcv != null) {
+            return _rcv.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withRcv(BigDecimal rawRcv) {
-        _rcv = rawRcv.divide(Config.RCV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getRcvNormalized() {
+        if (_rcv != null) {
+            return _rcv.divide(Config.RCV_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withRcv(BigDecimal rcv) {
+        _rcv = rcv;
         return this;
     }
 
     BigDecimal getBlk() {
-        return _blk;
+        if (_blk != null) {
+            return _blk.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withBlk(BigDecimal rawBlk) {
-        _blk = rawBlk.divide(Config.BLK_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getBlkNormalized() {
+        if (_blk != null) {
+            return _blk.divide(Config.BLK_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withBlk(BigDecimal blk) {
+        _blk = blk;
         return this;
     }
 
     BigDecimal getDig() {
-        return _dig;
+        if (_dig != null) {
+            return _dig.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withDig(BigDecimal rawDig) {
-        _dig = rawDig.divide(Config.DIG_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getDigNormalized() {
+        if (_dig != null) {
+            return _dig.divide(Config.DIG_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withDig(BigDecimal dig) {
+        _dig = dig;
         return this;
     }
 
     BigDecimal getPass() {
-        return _pass;
+        if (_pass != null) {
+            return _pass.setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
     }
 
-    Player withPass(BigDecimal rawPass) {
-        _pass = rawPass.divide(Config.PASS_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+    BigDecimal getPassNormalized() {
+        if (_pass != null) {
+            return _pass.divide(Config.PASS_OPTIMAL, RoundingMode.HALF_UP).setScale(3, RoundingMode.HALF_UP);
+        } else {
+            return null;
+        }
+    }
+
+    Player withPass(BigDecimal pass) {
+        _pass = pass;
         return this;
     }
 
