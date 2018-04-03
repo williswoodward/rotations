@@ -1,7 +1,7 @@
-import javafx.util.Pair;
-
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class Rotation42 extends Rotation {
@@ -18,23 +18,38 @@ public class Rotation42 extends Rotation {
     @Override
     protected void generateBackRowOptions(List<Player> row, int pos) {
         if (!_isPlayablePositions) return;
-        generateRowOptionsAll(row, pos, _backRowOptions);
+
+        for (int i = 0; i < row.size(); i++) {
+            for (int j = 0; j < row.size(); j++) {
+                if (j != i) {
+                    for (int k = 0; k < row.size(); k++) {
+                        if (k != i && k != j) {
+                            List<PlayerAssignment> option = new ArrayList<>();
+                            option.add(new PlayerAssignment(row.get(0), getPositionForRowIndex(i)));
+                            if (row.size() > 1) option.add(new PlayerAssignment(row.get(1), getPositionForRowIndex(j)));
+                            if (row.size() > 2) option.add(new PlayerAssignment(row.get(2), getPositionForRowIndex(k)));
+                            _backRowOptions.add(option);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
-    protected BigDecimal evaluateFrontRowOption(List<Pair<Player, Position>> option) {
+    protected BigDecimal evaluateFrontRowOption(List<PlayerAssignment> option) {
         BigDecimal total = BigDecimal.ZERO;
 
-        for (Pair<Player, Position> playerAssignment : option) {
-            switch (playerAssignment.getValue()) {
+        for (PlayerAssignment playerAssignment : option) {
+            switch (playerAssignment.getPosition()) {
                 case MIDDLE:
-                    total = total.add(evaluateMiddle(playerAssignment.getKey()));
+                    total = total.add(evaluateMiddle(playerAssignment.getPlayer()));
                     break;
                 case OUTSIDE:
-                    total = total.add(evaluateOutside(playerAssignment.getKey()));
+                    total = total.add(evaluateOutside(playerAssignment.getPlayer()));
                     break;
                 case SETTER:
-                    total = total.add(evaluateSetter(playerAssignment.getKey()));
+                    total = total.add(evaluateSetter(playerAssignment.getPlayer()));
                     break;
                 default:
                     break;
@@ -50,27 +65,39 @@ public class Rotation42 extends Rotation {
     }
 
     @Override
-    protected BigDecimal evaluateBackRowOption(List<Player> option) {
+    protected BigDecimal evaluateBackRowOption(List<PlayerAssignment> option) {
         BigDecimal total = BigDecimal.ZERO;
 
-        switch (option.size()) {
-            case 1:
-                total = total.add(evaluateBackLeft(option.get(0)));
-                break;
-            case 2:
-                total = total.add(evaluateBackLeft(option.get(0)));
-                total = total.add(evaluateBackRight(option.get(1)));
-                break;
-            case 3:
-                total = total.add(evaluateBackLeft(option.get(0)));
-                total = total.add(evaluateBackMid(option.get(1)));
-                total = total.add(evaluateBackRight(option.get(2)));
-                break;
-            default:
-                break;
+        for (PlayerAssignment playerAssignment : option) {
+            switch (playerAssignment.getPosition()) {
+                case BACKLEFT:
+                    total = total.add(evaluateBackLeft(playerAssignment.getPlayer()));
+                    break;
+                case BACKRIGHT:
+                    total = total.add(evaluateBackRight(playerAssignment.getPlayer()));
+                    break;
+                case BACKMID:
+                    total = total.add(evaluateBackMid(playerAssignment.getPlayer()));
+                    break;
+                default:
+                    break;
+            }
         }
 
         return total;
+    }
+
+    private Position getPositionForRowIndex(int i) {
+        switch (i) {
+            case 0:
+                return Position.BACKLEFT;
+            case 1:
+                return Position.BACKRIGHT;
+            case 2:
+                return Position.BACKMID;
+            default:
+                return null;
+        }
     }
 
     private BigDecimal evaluateMiddle(Player player) {
@@ -98,28 +125,24 @@ public class Rotation42 extends Rotation {
             dig = dig.multiply(Config.WT_BACKLEFT_STRONG_OPP);
         }
 
-        return dig.add(player.getRcvNormalized().multiply(Config.WT_BACKLEFT_RCV))
-                .add(player.getPassNormalized().multiply(Config.WT_BACKLEFT_PASS));
+        return dig.add(player.getPassNormalized().multiply(Config.WT_BACKLEFT_PASS));
     }
 
     private BigDecimal evaluateBackMid(Player player) {
         return player.getDigNormalized().multiply(Config.WT_BACKMID_DIG)
-                .add(player.getRcvNormalized().multiply(Config.WT_BACKMID_RCV))
                 .add(player.getPassNormalized().multiply(Config.WT_BACKMID_PASS));
     }
 
     private BigDecimal evaluateBackRight(Player player) {
         return player.getDigNormalized().multiply(Config.WT_BACKRIGHT_DIG)
-                .add(player.getRcvNormalized().multiply(Config.WT_BACKRIGHT_RCV))
-                .add(player.getPassNormalized().multiply(Config.WT_BACKRIGHT_PASS))
-                .add(player.getSrvNormalized().multiply(Config.WT_BACKRIGHT_SRV));
+                .add(player.getPassNormalized().multiply(Config.WT_BACKRIGHT_PASS));
     }
 
     @Override
-    boolean lackingHitters(List<Pair<Player, Position>> option) {
-        for (Pair<Player, Position> playerAssignment : option) {
-            if ((playerAssignment.getValue() == Position.MIDDLE || playerAssignment.getValue() == Position.OUTSIDE)
-                    && playerAssignment.getKey().getHitNormalized().compareTo(Config.HIT_BASELINE) > 0) {
+    boolean lackingHitters(List<PlayerAssignment> option) {
+        for (PlayerAssignment playerAssignment : option) {
+            if ((playerAssignment.getPosition() == Position.MIDDLE || playerAssignment.getPosition() == Position.OUTSIDE)
+                    && playerAssignment.getPlayer().getHitNormalized().compareTo(Config.HIT_BASELINE) > 0) {
                 return false;
             }
         }

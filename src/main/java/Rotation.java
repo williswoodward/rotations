@@ -1,11 +1,9 @@
 import com.google.common.base.Preconditions;
-import javafx.util.Pair;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public abstract class Rotation {
@@ -15,8 +13,10 @@ public abstract class Rotation {
     private BigDecimal _value;
     boolean _isPlayablePositions;
 
-    List<List<Pair<Player, Position>>> _frontRowOptions = new ArrayList<>();
-    List<List<Player>> _backRowOptions = new ArrayList<>();
+    List<List<PlayerAssignment>> _frontRowOptions = new ArrayList<>();
+    private List<PlayerAssignment> _bestFrontRow;
+    List<List<PlayerAssignment>> _backRowOptions = new ArrayList<>();
+    private List<PlayerAssignment> _bestBackRow;
 
     public Rotation(List<Player> players, int index) {
         Preconditions.checkArgument(players.size() <= Config.COURT_SIZE);
@@ -27,7 +27,7 @@ public abstract class Rotation {
 
         generateFrontRowOptions(getFrontRow());
         generateBackRowOptions(getBackRow(), 0);
-        _value = generateValue();
+        _value = findBestPositions();
     }
 
     BigDecimal getValue() {
@@ -50,25 +50,27 @@ public abstract class Rotation {
 
     protected abstract void generateBackRowOptions(List<Player> row, int pos);
 
-    protected abstract BigDecimal evaluateFrontRowOption(List<Pair<Player, Position>> option);
+    protected abstract BigDecimal evaluateFrontRowOption(List<PlayerAssignment> option);
 
-    protected abstract BigDecimal evaluateBackRowOption(List<Player> option);
+    protected abstract BigDecimal evaluateBackRowOption(List<PlayerAssignment> option);
 
-    abstract boolean lackingHitters(List<Pair<Player, Position>> option);
+    abstract boolean lackingHitters(List<PlayerAssignment> option);
 
     private List<Player> getFrontRow() {
         return _players.subList(0, 3);
     }
 
-    private List<Player> getBackRow() {
+    List<Player> getBackRow() {
         return _players.subList(3, _players.size());
     }
 
-    private BigDecimal generateValue() {
+    private BigDecimal findBestPositions() {
         BigDecimal value = BigDecimal.ZERO;
 
-        value = value.add(evaluateFrontRow());
-        value = value.add(evaluateBackRow());
+        value = value.add(findBestFrontRow());
+        value = value.add(findBestBackRow());
+
+        value = value.add(serveValue());
 
         // Falloff for less likely rotations
         if (_index > Config.EXPECTED_NUM_ROTATIONS) {
@@ -84,26 +86,28 @@ public abstract class Rotation {
         return value;
     }
 
-    private BigDecimal evaluateFrontRow() {
+    private BigDecimal findBestFrontRow() {
         BigDecimal total = BigDecimal.ZERO;
 
-        for (List<Pair<Player, Position>> option : _frontRowOptions) {
+        for (List<PlayerAssignment> option : _frontRowOptions) {
             BigDecimal rowValue = evaluateFrontRowOption(option);
-            if (rowValue.compareTo(total) > 0) {
+            if (rowValue.compareTo(total) > 0 || _bestFrontRow == null) {
                 total = rowValue;
+                _bestFrontRow = option;
             }
         }
 
         return total;
     }
 
-    private BigDecimal evaluateBackRow() {
+    private BigDecimal findBestBackRow() {
         BigDecimal total = BigDecimal.ZERO;
 
-        for (List<Player> option : _backRowOptions) {
+        for (List<PlayerAssignment> option : _backRowOptions) {
             BigDecimal rowValue = evaluateBackRowOption(option);
-            if (rowValue.compareTo(total) > 0) {
+            if (rowValue.compareTo(total) > 0 || _bestBackRow == null) {
                 total = rowValue;
+                _bestBackRow = option;
             }
         }
 
@@ -114,6 +118,26 @@ public abstract class Rotation {
 
         return total;
     }
+
+    private BigDecimal serveValue() {
+        BigDecimal value = BigDecimal.ZERO;
+
+        if (_bestBackRow != null) {
+            for (PlayerAssignment assignment : _bestBackRow) {
+                if (assignment.getPosition() == Position.BACKLEFT) {
+                    value = value.add(assignment.getPlayer().getRcvNormalized().multiply(Config.WT_BACKLEFT_RCV));
+                } else if (assignment.getPosition() == Position.BACKMID) {
+                    value = value.add(assignment.getPlayer().getRcvNormalized().multiply(Config.WT_BACKMID_RCV));
+                } else if (assignment.getPosition() == Position.BACKRIGHT) {
+                    value = value.add(assignment.getPlayer().getRcvNormalized().multiply(Config.WT_BACKRIGHT_RCV));
+                    value = value.add(assignment.getPlayer().getRcvNormalized().multiply(Config.WT_BACKRIGHT_SRV));
+                }
+            }
+        }
+
+        return value;
+    }
+
 
     private boolean lackingReceivers(List<Player> backRow) {
         for (int i = 0; i < backRow.size(); i++) {
@@ -127,7 +151,7 @@ public abstract class Rotation {
         return false;
     }
 
-    void generateRowOptionsUniquePositions(List<Player> row, List<List<Pair<Player, Position>>> optionsList, boolean setPlayable) {
+    void generateRowOptionsUniquePositions(List<Player> row, List<List<PlayerAssignment>> optionsList, boolean setPlayable) {
         Preconditions.checkArgument(row.size() == 3);
 
         for (int i = 0; i < row.get(0).getPositions().length; i++) {
@@ -136,10 +160,10 @@ public abstract class Rotation {
                     if ((row.get(0).getPositions()[i] != row.get(1).getPositions()[j]) &&
                             (row.get(0).getPositions()[i] != row.get(2).getPositions()[k]) &&
                             (row.get(1).getPositions()[j] != row.get(2).getPositions()[k])) {
-                        List<Pair<Player, Position>> rowOption = new ArrayList<>();
-                        rowOption.add(new Pair<>(row.get(0), row.get(0).getPositions()[i]));
-                        rowOption.add(new Pair<>(row.get(1), row.get(1).getPositions()[j]));
-                        rowOption.add(new Pair<>(row.get(2), row.get(2).getPositions()[k]));
+                        List<PlayerAssignment> rowOption = new ArrayList<>();
+                        rowOption.add(new PlayerAssignment(row.get(0), row.get(0).getPositions()[i]));
+                        rowOption.add(new PlayerAssignment(row.get(1), row.get(1).getPositions()[j]));
+                        rowOption.add(new PlayerAssignment(row.get(2), row.get(2).getPositions()[k]));
                         optionsList.add(rowOption);
                         if (setPlayable) {
                             _isPlayablePositions = true;
@@ -150,20 +174,11 @@ public abstract class Rotation {
         }
     }
 
-    void generateRowOptionsAll(List<Player> row, int pos, List<List<Player>> optionsList) {
-        for (int i = pos; i < row.size(); i++) {
-            Collections.swap(row, i, pos);
-            generateRowOptionsAll(row, pos + 1, optionsList);
-            Collections.swap(row, pos, i);
-        }
-
-        if (pos == row.size() - 1) {
-            optionsList.add(new ArrayList<>(row));
-        }
-    }
-
     @Override
     public String toString() {
-        return _index + ": " + java.util.Arrays.toString(_players.toArray()) + " - " + getValue();
+        ArrayList<PlayerAssignment> bestAssignments = new ArrayList<>();
+        if (_bestFrontRow != null) bestAssignments.addAll(_bestFrontRow);
+        if (_bestBackRow != null) bestAssignments.addAll(_bestBackRow);
+        return _index + ": " + bestAssignments + " - " + getValue();
     }
 }

@@ -1,5 +1,11 @@
 This app was created using the Google Sheets API's Java Quickstart template.
 
+A live version can be accessed via a shared local server here: http://1facaa59.ngrok.io/dev/results.
+
+The live version only has a few controls exposed via a rudimentary web interface. For full control, run locally.
+
+Local build instructions:
+
 Follow the instructions here: https://developers.google.com/sheets/api/quickstart/java. Be sure to install Java 1.8 (not 1.7).
 
 Once you've created the gradle project as per the instructions, you can safely delete the sample Quickstart.java, and use the contents of this project's src/main/java instead.
