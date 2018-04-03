@@ -5,16 +5,16 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
 
-class Lineup42 {
+class Lineup {
     private BigDecimal _value;
-    private List<Rotation42> _rotations;
+    private List<Rotation> _rotations;
 
     private final List<Player> _players;
     private List<Player> _playerBuffer;
     private int[] _nextOut = new int[Config.NUM_ROTATION_SIDES];
     private int[] _nextIn = new int[Config.NUM_ROTATION_SIDES];
 
-    Lineup42(List<Player> players) {
+    Lineup(List<Player> players) {
         _players = players;
         _playerBuffer = new ArrayList<>(players);
         _rotations = createRotations();
@@ -22,7 +22,7 @@ class Lineup42 {
     }
 
     @SuppressWarnings("CopyConstructorMissesField")
-    Lineup42(Lineup42 lineup) {
+    Lineup(Lineup lineup) {
         _players = new ArrayList<>(lineup._players);
         _playerBuffer = new ArrayList<>(lineup._players);
         _rotations = createRotations();
@@ -40,7 +40,7 @@ class Lineup42 {
     private BigDecimal generateValue() {
         BigDecimal sum = BigDecimal.ZERO;
         if (_rotations != null) {
-            for (Rotation42 rotation : _rotations) {
+            for (Rotation rotation : _rotations) {
                 sum = sum.add(rotation.getValue());
             }
 
@@ -50,17 +50,17 @@ class Lineup42 {
         return BigDecimal.ZERO;
     }
 
-    private List<Rotation42> createRotations() {
-        final Rotation42 starting = getOneRotation(0);
+    private List<Rotation> createRotations() {
+        final Rotation starting = getOneRotation(0);
 
         int starting_females = starting.countFemales();
         if (starting_females < countFemales() && starting_females < (Config.COURT_SIZE - Config.MAX_MALES)) {
             return null;
         }
 
-        List<Rotation42> rotations = new ArrayList<>();
+        List<Rotation> rotations = new ArrayList<>();
         for (int i = 0; i < Config.MAX_ROTATIONS; i++) {
-            Rotation42 rotation = getOneRotation(i);
+            Rotation rotation = getOneRotation(i);
 
             if (!rotation.isPlayablePositions()) return null;
 
@@ -71,7 +71,7 @@ class Lineup42 {
         return rotations;
     }
 
-    private Rotation42 getOneRotation(int index) {
+    private Rotation getOneRotation(int index) {
         int max_rotation_size = (int) (Config.MAX_MALES + countFemales());
         if (max_rotation_size > Config.COURT_SIZE) {
             max_rotation_size = Config.COURT_SIZE;
@@ -102,6 +102,7 @@ class Lineup42 {
             }
         }
 
+        // TODO: Rotation switch goes here
         return new Rotation42(rotationPlayers, index);
     }
 
@@ -137,7 +138,7 @@ class Lineup42 {
         return starts;
     }
 
-    private void enforceMaxMales(Rotation42 rotation) {
+    private void enforceMaxMales(Rotation rotation) {
         if (Config.MINIMIZE_SWAPPING) {
             final int female_divisor = Config.COURT_SIZE / (Config.COURT_SIZE - Config.MAX_MALES);
             if (countFemales() * female_divisor >= _playerBuffer.size()) {
@@ -206,7 +207,7 @@ class Lineup42 {
     public String toString() {
         StringBuilder str = new StringBuilder(Arrays.toString(_players.toArray()) + " - " + getValue());
         if (_rotations == null) return str.toString();
-        for (Rotation42 rotation : _rotations) {
+        for (Rotation rotation : _rotations) {
             str.append("\n").append(rotation);
         }
 

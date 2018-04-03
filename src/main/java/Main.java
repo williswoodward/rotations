@@ -50,7 +50,7 @@ public class Main extends HttpServlet {
     private static StringBuffer _result_str = new StringBuffer();
     static StringBuffer _import_str = new StringBuffer();
 
-    private static List<Lineup42> _best_lineups = new ArrayList<>();
+    private static List<Lineup> _best_lineups = new ArrayList<>();
     private static int _search_count = 0;
 
     /**
@@ -117,14 +117,14 @@ public class Main extends HttpServlet {
     }
 
     private static void createAndSearchLineup(List<Player> players) {
-        Lineup42 lineup = new Lineup42(players);
+        Lineup lineup = new Lineup(players);
         if (_best_lineups.size() < Config.NUM_LINEUPS) {
-            _best_lineups.add(new Lineup42(lineup));
-            _best_lineups.sort(Comparator.comparing(Lineup42::getValue).reversed());
+            _best_lineups.add(new Lineup(lineup));
+            _best_lineups.sort(Comparator.comparing(Lineup::getValue).reversed());
         } else if (lineup.getValue().compareTo(_best_lineups.get(_best_lineups.size() - 1).getValue()) > 0) {
             _best_lineups.remove(_best_lineups.size() - 1);
-            _best_lineups.add(new Lineup42(lineup));
-            _best_lineups.sort(Comparator.comparing(Lineup42::getValue).reversed());
+            _best_lineups.add(new Lineup(lineup));
+            _best_lineups.sort(Comparator.comparing(Lineup::getValue).reversed());
         }
 
         // DEBUG: Uncomment!
@@ -134,7 +134,7 @@ public class Main extends HttpServlet {
     private static void printBestLineups() {
         _result_str.append("TOP LINEUPS");
         _result_str.append("\n-----------");
-        for (Lineup42 lineup : _best_lineups) {
+        for (Lineup lineup : _best_lineups) {
             _result_str.append("\n\n").append(lineup).append("\n");
         }
     }
