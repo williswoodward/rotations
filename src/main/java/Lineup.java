@@ -1,3 +1,4 @@
+import com.google.common.collect.*;
 import com.google.common.primitives.Ints;
 import javafx.util.Pair;
 
@@ -14,11 +15,14 @@ class Lineup {
     private int[] _nextOut = new int[Config.NUM_ROTATION_SIDES];
     private int[] _nextIn = new int[Config.NUM_ROTATION_SIDES];
 
+    private Multimap<Player, Position> _playerPositions = HashMultimap.create();
+    private BigDecimal _multiPositionPenalty = BigDecimal.ZERO;
+
     Lineup(List<Player> players) {
         _players = players;
         _playerBuffer = new ArrayList<>(players);
         _rotations = createRotations();
-        _value = generateValue();
+        _value = calculateValue();
     }
 
     @SuppressWarnings("CopyConstructorMissesField")
@@ -26,18 +30,22 @@ class Lineup {
         _players = new ArrayList<>(lineup._players);
         _playerBuffer = new ArrayList<>(lineup._players);
         _rotations = createRotations();
-        _value = generateValue();
+        _value = calculateValue();
     }
 
     BigDecimal getValue() {
         return _value.setScale(3, RoundingMode.HALF_UP);
     }
 
+    public Multimap<Player, Position> getPlayerPositions() {
+        return _playerPositions;
+    }
+
     private int countFemales() {
         return (int) _playerBuffer.stream().filter(Player::isFemale).count();
     }
 
-    private BigDecimal generateValue() {
+    private BigDecimal calculateValue() {
         BigDecimal sum = BigDecimal.ZERO;
         if (_rotations != null) {
             for (Rotation rotation : _rotations) {
@@ -53,8 +61,8 @@ class Lineup {
     private List<Rotation> createRotations() {
         final Rotation starting = getOneRotation(0);
 
-        int starting_females = starting.countFemales();
-        if (starting_females < countFemales() && starting_females < (Config.COURT_SIZE - Config.MAX_MALES)) {
+        int startingFemales = starting.countFemales();
+        if (startingFemales < countFemales() && startingFemales < (Config.COURT_SIZE - Config.MAX_MALES)) {
             return null;
         }
 
@@ -72,19 +80,19 @@ class Lineup {
     }
 
     private Rotation getOneRotation(int index) {
-        int max_rotation_size = (int) (Config.MAX_MALES + countFemales());
-        if (max_rotation_size > Config.COURT_SIZE) {
-            max_rotation_size = Config.COURT_SIZE;
+        int maxRotationSize = (int) (Config.MAX_MALES + countFemales());
+        if (maxRotationSize > Config.COURT_SIZE) {
+            maxRotationSize = Config.COURT_SIZE;
         }
-        final int full_rotation_size = _playerBuffer.size() < max_rotation_size ? _playerBuffer.size() : max_rotation_size;
-        final int sub_rotation_size = full_rotation_size/Config.NUM_ROTATION_SIDES;
+        final int fullRotationSize = _playerBuffer.size() < maxRotationSize ? _playerBuffer.size() : maxRotationSize;
+        final int subRotationSize = fullRotationSize/Config.NUM_ROTATION_SIDES;
 
-        final int[] startPositions = getRotationStartPositions(full_rotation_size, sub_rotation_size);
+        final int[] startPositions = getRotationStartPositions(fullRotationSize, subRotationSize);
 
         List<Player> rotationPlayers = new ArrayList<>();
         for (int i = 0; i < Config.NUM_ROTATION_SIDES; i++) {
             final int from = wrap(index + startPositions[i]);
-            int to = from + sub_rotation_size;
+            int to = from + subRotationSize;
             int remainder = 0;
 
             if (to > _playerBuffer.size()) {
@@ -103,14 +111,14 @@ class Lineup {
         }
 
         // TODO: Rotation switch goes here
-        return new Rotation42(rotationPlayers, index);
+        return new Rotation42(rotationPlayers, index, this);
     }
 
     private int[] getRotationStartPositions(int rotationSize, int sub_rotation_size) {
         int[] starts = new int[Config.NUM_ROTATION_SIDES];
-        final int num_players_off_per_side = (_playerBuffer.size() - rotationSize) / Config.NUM_ROTATION_SIDES;
+        final int numPlayersOffPerSide = (_playerBuffer.size() - rotationSize) / Config.NUM_ROTATION_SIDES;
 
-        if (num_players_off_per_side < 0) {
+        if (numPlayersOffPerSide < 0) {
             for (int i = 0; i < starts.length; i++) {
                 starts[i] = 0;
             }
@@ -118,19 +126,19 @@ class Lineup {
             return starts;
         }
 
-        int num_players_off_remainder = (_playerBuffer.size() - rotationSize) % Config.NUM_ROTATION_SIDES;
+        int numPlayersOffRemainder = (_playerBuffer.size() - rotationSize) % Config.NUM_ROTATION_SIDES;
         int pos = 0;
 
         for (int i = 0; i < starts.length; i++) {
             starts[i] = pos;
 
-            pos += sub_rotation_size + num_players_off_per_side;
+            pos += sub_rotation_size + numPlayersOffPerSide;
             if (Config.MULTIPLE_ROTATION_SHIFT_LEFT) {
-                if (num_players_off_remainder > 0) {
+                if (numPlayersOffRemainder > 0) {
                     pos++;
-                    num_players_off_remainder--;
+                    numPlayersOffRemainder--;
                 }
-            } else if (i >= (starts.length - num_players_off_remainder)) {
+            } else if (i >= (starts.length - numPlayersOffRemainder)) {
                 pos++;
             }
         }
@@ -140,8 +148,8 @@ class Lineup {
 
     private void enforceMaxMales(Rotation rotation) {
         if (Config.MINIMIZE_SWAPPING) {
-            final int female_divisor = Config.COURT_SIZE / (Config.COURT_SIZE - Config.MAX_MALES);
-            if (countFemales() * female_divisor >= _playerBuffer.size()) {
+            final int femaleDivisor = Config.COURT_SIZE / (Config.COURT_SIZE - Config.MAX_MALES);
+            if (countFemales() * femaleDivisor >= _playerBuffer.size()) {
                 return;
             }
         }
@@ -205,10 +213,25 @@ class Lineup {
 
     @Override
     public String toString() {
-        StringBuilder str = new StringBuilder(Arrays.toString(_players.toArray()) + " - " + getValue());
-        if (_rotations == null) return str.toString();
-        for (Rotation rotation : _rotations) {
-            str.append("\n").append(rotation);
+        StringBuilder str = new StringBuilder("[");
+        for (int i = 0; i < _players.size(); i++) {
+            Player player = _players.get(i);
+            str.append(player.getName()).append("(");
+            for (Position position : _playerPositions.get(player)) {
+                if (position.isFrontRow()) {
+                    str.append(position);
+                    str.append("/");
+                }
+            }
+            str.replace(str.length() - 1, str.length(), "");
+            str.append(")");
+            if (i < (_players.size() - 1)) str.append(", ");
+        }
+        str.append("] - ").append(getValue());
+        if (_rotations != null) {
+            for (Rotation rotation : _rotations) {
+                str.append("\n").append(rotation);
+            }
         }
 
         return str.toString();

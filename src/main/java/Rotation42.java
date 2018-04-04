@@ -1,13 +1,11 @@
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Rotation42 extends Rotation {
 
-    Rotation42(List<Player> players, int index) {
-        super(players, index);
+
+    Rotation42(List<Player> players, int index, Lineup lineup) {
+        super(players, index, lineup);;
     }
 
     @Override

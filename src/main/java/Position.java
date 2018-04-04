@@ -19,5 +19,14 @@ public enum Position {
             default: return "";
         }
     }
+
+    boolean isFrontRow() {
+        switch (this) {
+            case MIDDLE:
+            case OUTSIDE:
+            case SETTER: return true;
+            default: return false;
+        }
+    }
 }
 
