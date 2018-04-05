@@ -20,7 +20,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 @WebServlet(name = "RotationsServlet", urlPatterns = {"results"}, loadOnStartup = 1)
 public class Main extends HttpServlet {
@@ -57,9 +62,18 @@ public class Main extends HttpServlet {
      * LOCAL APPLICATION
      */
     public static void main(String[] args) throws IOException {
+        // Figure out which players we're using and print them
+        List<Player> players = Config.getAllPlayers();
+        if (Arrays.stream(args).anyMatch("--quickTest"::equals)) {
+            System.out.println("--quickTest flag enabled, using just a few players");
+            // this is arbitrary, just short enough to be quick
+            players = Config.getPlayersByIndex(0, 1, 2, 3, 5, 6, 8, 10);
+        }
+        System.out.println("Using players: " + players.toString());
+
         _sheets = getSheetsService();
-        getPlayerDataFromSheets(Config._players);
-        searchAllLineups(Arrays.asList(Config._players), 0);
+        getPlayerDataFromSheets(players);
+        searchAllLineups(players, 0);
 
         printBestLineups();
         System.out.println(_result_str.append(_import_str));
@@ -76,11 +90,11 @@ public class Main extends HttpServlet {
         _best_lineups = new ArrayList<>();
         _search_count = 0;
 
-        Player[] players = parseRequest(request);
+        List<Player> players = parseRequest(request);
         addPlayerOverridesFromConfig(players);
         getPlayerDataFromSheets(players);
 
-        searchAllLineups(Arrays.asList(players), 0);
+        searchAllLineups(players, 0);
 
         printBestLineups();
         String result = _result_str.append(_import_str).toString().replace("\n", "<br />");
@@ -94,7 +108,7 @@ public class Main extends HttpServlet {
         response.sendRedirect(request.getContextPath());
     }
 
-    private static void getPlayerDataFromSheets(Player[] players) throws IOException {
+    private static void getPlayerDataFromSheets(List<Player> players) throws IOException {
         for (Player player : players) {
             player.initData(_sheets);
         }
@@ -139,7 +153,7 @@ public class Main extends HttpServlet {
         }
     }
 
-    private Player[] parseRequest(HttpServletRequest request) {
+    private List<Player> parseRequest(HttpServletRequest request) {
         List<Player> players = new ArrayList<>();
 
         //TODO: Can't change positions without full refresh?
@@ -180,13 +194,14 @@ public class Main extends HttpServlet {
             }
         }
 
-        Player[] playerArr = new Player[players.size()];
-        return players.toArray(playerArr);
+        return players;
     }
 
-    private void addPlayerOverridesFromConfig(Player[] players) {
+    private void addPlayerOverridesFromConfig(List<Player> players) {
         for (Player player : players) {
-            Optional<Player> configMatch = Arrays.stream(Config._players).filter(e -> e.getName().equals(player.getName())).findFirst();
+            Optional<Player> configMatch = Config.getAllPlayers().stream()
+                .filter(e -> e.getName().equals(player.getName()))
+                .findFirst();
             if (configMatch.isPresent()) {
                 Player configPlayer = configMatch.get();
                 player.withSrv(configPlayer.getSrv());

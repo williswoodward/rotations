@@ -1,31 +1,53 @@
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
+
 import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 final class Config {
     // Match Config
-    // IF RUNNING LOCALLY: Comment out individual players to remove them from the lineup
-    static Player[] _players = {
-            new Player("Andrew", false, Position.MIDDLE, Position.OUTSIDE, Position.SETTER)
-                    .withBlk(new BigDecimal(0.15))
-                    .withSet(new BigDecimal(0.75)),
-            new Player("Avi", false, Position.MIDDLE, Position.OUTSIDE),
-            new Player("Chris", false, Position.OUTSIDE),
-            new Player("Denise", true, Position.OUTSIDE, Position.SETTER)
-                    .withBlk(BigDecimal.ZERO),
-            new Player("Dennis", false, Position.OUTSIDE, Position.MIDDLE)
-                    .withSrv(new BigDecimal(0.2))
-                    .withRcv(new BigDecimal(0.5))
-                    .withBlk(new BigDecimal(0.3))
-                    .withDig(new BigDecimal(0.4))
-                    .withPass(new BigDecimal(0.9)),
-            new Player("Hoff", false, Position.MIDDLE),
-            new Player("Jiyu", true, Position.SETTER).withBlk(BigDecimal.ZERO)
-                    .withBlk(BigDecimal.ZERO),
-            new Player("Katie", true, Position.SETTER),
-            new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
-            new Player("Regena", true, Position.MIDDLE, Position.OUTSIDE, Position.SETTER),
-            new Player("Sue", true, Position.SETTER)
-                    .withBlk(BigDecimal.ZERO)
-    };
+    private static List<Player> _players = ImmutableList.of(
+        new Player("Andrew", false, Position.MIDDLE, Position.OUTSIDE, Position.SETTER)
+            .withBlk(new BigDecimal(0.15))
+            .withSet(new BigDecimal(0.75)),
+        new Player("Avi", false, Position.MIDDLE, Position.OUTSIDE),
+        new Player("Chris", false, Position.OUTSIDE),
+        new Player("Denise", true, Position.OUTSIDE, Position.SETTER)
+            .withBlk(BigDecimal.ZERO),
+        new Player("Dennis", false, Position.OUTSIDE, Position.MIDDLE)
+            .withSrv(new BigDecimal(0.2))
+            .withRcv(new BigDecimal(0.5))
+            .withBlk(new BigDecimal(0.3))
+            .withDig(new BigDecimal(0.4))
+            .withPass(new BigDecimal(0.9)),
+        new Player("Hoff", false, Position.MIDDLE),
+        new Player("Jiyu", true, Position.SETTER).withBlk(BigDecimal.ZERO)
+            .withBlk(BigDecimal.ZERO),
+        new Player("Katie", true, Position.SETTER),
+        new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
+        new Player("Regena", true, Position.MIDDLE, Position.OUTSIDE, Position.SETTER),
+        new Player("Sue", true, Position.SETTER)
+            .withBlk(BigDecimal.ZERO)
+    );
+
+    /** Return a mutable list of all players. */
+    public static List<Player> getAllPlayers() {
+        return Lists.newArrayList(_players);
+    }
+
+    /** Return a list of just the players at the given indices. */
+    public static List<Player> getPlayersByIndex(Integer... selectedIndices) {
+        List<Player> playerList = Lists.newArrayList(_players);
+        List<Integer> indicesList = Arrays.asList(selectedIndices);
+
+        return IntStream.range(0, playerList.size())
+          .filter(indicesList::contains)
+          .mapToObj(playerList::get)
+          .collect(Collectors.toList());
+    }
 
     static final int[] STRONG_OPP_HIT_ROTATIONS = {0, 1, 2, 7, 8, 9};
 

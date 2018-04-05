@@ -20,3 +20,9 @@ dependencies {
 
     providedCompile 'javax.servlet:javax.servlet-api:3.1.0'
 }
+
+// I'd like to have this as a separate task, but I'm new to gradle, so I'll just
+// comment out before committing ~mritterhoff
+run {
+    args = ["--quickTest"]
+}
