@@ -10,43 +10,60 @@ import java.util.stream.IntStream;
 final class Config {
     // Match Config
     private static List<Player> _players = ImmutableList.of(
-        new Player("Andrew", false, Position.MIDDLE, Position.OUTSIDE, Position.SETTER)
-            .withBlk(new BigDecimal(0.15))
-            .withSet(new BigDecimal(0.75)),
-        new Player("Avi", false, Position.MIDDLE, Position.OUTSIDE),
-        new Player("Chris", false, Position.OUTSIDE),
-        new Player("Denise", true, Position.OUTSIDE, Position.SETTER)
-            .withBlk(BigDecimal.ZERO),
-        new Player("Dennis", false, Position.OUTSIDE, Position.MIDDLE)
-            .withSrv(new BigDecimal(0.2))
-            .withRcv(new BigDecimal(0.5))
-            .withBlk(new BigDecimal(0.3))
-            .withDig(new BigDecimal(0.4))
-            .withPass(new BigDecimal(0.9)),
-        new Player("Hoff", false, Position.MIDDLE),
-        new Player("Jiyu", true, Position.SETTER).withBlk(BigDecimal.ZERO)
-            .withBlk(BigDecimal.ZERO),
-        new Player("Katie", true, Position.SETTER),
-        new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
-        new Player("Regena", true, Position.MIDDLE, Position.OUTSIDE, Position.SETTER),
-        new Player("Sue", true, Position.SETTER)
-            .withBlk(BigDecimal.ZERO)
+            new Player("Andrew", false, Position.OUTSIDE)
+                    .withBlk(new BigDecimal(0.15))
+                    .withSet(new BigDecimal(0.8)),
+            new Player("Avi", false, Position.MIDDLE),
+//            new Player("Denise", true, Position.OUTSIDE, Position.SETTER)
+//                    .withBlk(new BigDecimal(0.1)),
+//            new Player("Dennis", false, Position.MIDDLE),
+            new Player("Hoff", false, Position.MIDDLE, Position.OUTSIDE),
+            new Player("Jeremy", false, Position.MIDDLE)
+                    .withSrv(new BigDecimal(0.3))
+                    .withHit(new BigDecimal(0.25))
+                    .withBlk(new BigDecimal(0.3))
+                    .withRcv(new BigDecimal(0.25))
+                    .withDig(new BigDecimal(0.2))
+                    .withPass(new BigDecimal(0.8)),
+            new Player("Jiyu", true, Position.SETTER)
+                    .withBlk(BigDecimal.ZERO),
+            new Player("Mark", false, Position.OUTSIDE, Position.SETTER),
+            new Player("Nicole", true, Position.SETTER)
+                    .withSrv(new BigDecimal(0.2))
+                    .withSet(new BigDecimal(0.7))
+                    .withRcv(new BigDecimal(0.5))
+                    .withDig(new BigDecimal(0.4))
+                    .withPass(new BigDecimal(0.9)),
+            new Player("Regena", true, Position.MIDDLE, Position.OUTSIDE, Position.SETTER)
+                    .withSrv(new BigDecimal(0.2))
+                    .withSet(new BigDecimal(0.75))
+                    .withHit(new BigDecimal(0.1))
+                    .withBlk(new BigDecimal(0.1))
+                    .withRcv(new BigDecimal(0.25))
+                    .withDig(new BigDecimal(0.2))
+                    .withPass(new BigDecimal(0.8)),
+            new Player("Sue", true, Position.SETTER)
+                    .withBlk(BigDecimal.ZERO)
     );
 
-    /** Return a mutable list of all players. */
+    /**
+     * Return a mutable list of all players.
+     */
     public static List<Player> getAllPlayers() {
         return Lists.newArrayList(_players);
     }
 
-    /** Return a list of just the players at the given indices. */
+    /**
+     * Return a list of just the players at the given indices.
+     */
     public static List<Player> getPlayersByIndex(Integer... selectedIndices) {
         List<Player> playerList = Lists.newArrayList(_players);
         List<Integer> indicesList = Arrays.asList(selectedIndices);
 
         return IntStream.range(0, playerList.size())
-          .filter(indicesList::contains)
-          .mapToObj(playerList::get)
-          .collect(Collectors.toList());
+                .filter(indicesList::contains)
+                .mapToObj(playerList::get)
+                .collect(Collectors.toList());
     }
 
     static final int[] STRONG_OPP_HIT_ROTATIONS = {0, 1, 2, 7, 8, 9};
@@ -55,16 +72,19 @@ final class Config {
     // Rotation Config
 
     // The number of rotations we expect to play per set. When exceeded, the value of rotations will drop off sharply.
-    static final int EXPECTED_NUM_ROTATIONS = 9;
+    static final int EXPECTED_NUM_ROTATIONS = 10;
 
     // Cap on the number of rotations to look at for any given lineup.
-    static final int MAX_ROTATIONS = 12;
+    static final int MAX_ROTATIONS = 14;
 
     // Set to 2 for Double Rotation. You COULD set it to any integer. Have a party!
     static final int NUM_ROTATION_SIDES = 1;
 
     // For double rotation, this determines whether the odd number of players out ends up on Left or Right court.
     static final boolean MULTIPLE_ROTATION_SHIFT_LEFT = true;
+
+    // For rotations where only the men rotate out, give everyone roughly equal time off of the court.
+    static final boolean EQUALIZE_OFF_TIME = false;
 
     // Edge case stuff. Just leave it true.
     static final boolean MINIMIZE_SWAPPING = true;
@@ -80,8 +100,8 @@ final class Config {
     private static final BigDecimal PASS = new BigDecimal(1);
 
     // Position Config
-    static final BigDecimal OFFENSE_COMPOUND_PENALTY = new BigDecimal(0.5);
-    static final BigDecimal DEFENSE_COMPOUND_PENALTY = new BigDecimal(0.2);
+    static final BigDecimal OFFENSE_COMPOUND_PENALTY = new BigDecimal(0.2);
+    static final BigDecimal DEFENSE_COMPOUND_PENALTY = new BigDecimal(0.5);
 
     static final BigDecimal WT_MIDDLE_BLK = BLK.multiply(new BigDecimal(0.7));
     static final BigDecimal WT_MIDDLE_HIT = HIT.multiply(new BigDecimal(0.4));
@@ -132,13 +152,14 @@ final class Config {
     // Court Config
     static final int COURT_SIZE = 6;
     static final int MAX_MALES = 4;
+    static final int FEMALE_DIVISOR = COURT_SIZE / (COURT_SIZE - MAX_MALES);
 
     // Search Config
-    static final int NUM_LINEUPS = 5;
+    static final int NUM_LINEUPS = 10;
 
     // Data Config
-    static final String SPREADSHEET_ID = "1wPdRvmWy286esCAmKd66aRI8R-3Ni2-AI-xMK7mjGnA";
-    static final String DATA_RANGE = "H3:H48";
+    static final String SPREADSHEET_ID = "1MM28VP7KB4f_jvCpmryN3Tlffq8pLEtn5vXuOD91nKs";
+    static final String DATA_RANGE = "L3:L50";
     static final int DATA_MIN = 10;
 
     static final int DATA_COLUMN_OFFSET = 3;
@@ -147,13 +168,13 @@ final class Config {
     static final int DATA_COLUMN_HIT_EFF = 10;
     static final int DATA_COLUMN_HIT_TOT = 15;
     static final int DATA_COLUMN_SET_EFF = 17;
-    static final int DATA_COLUMN_SET_TOT = 21;
-    static final int DATA_COLUMN_RCV_EFF = 24;
-    static final int DATA_COLUMN_RCV_TOT = 28;
-    static final int DATA_COLUMN_BLK_EFF = 30;
-    static final int DATA_COLUMN_BLK_TOT = 35;
-    static final int DATA_COLUMN_DIG_EFF = 37;
-    static final int DATA_COLUMN_DIG_TOT = 42;
-    static final int DATA_COLUMN_PASS_EFF = 44;
-    static final int DATA_COLUMN_PASS_TOT = 48;
+    static final int DATA_COLUMN_SET_TOT = 22;
+    static final int DATA_COLUMN_RCV_EFF = 25;
+    static final int DATA_COLUMN_RCV_TOT = 29;
+    static final int DATA_COLUMN_BLK_EFF = 31;
+    static final int DATA_COLUMN_BLK_TOT = 37;
+    static final int DATA_COLUMN_DIG_EFF = 39;
+    static final int DATA_COLUMN_DIG_TOT = 44;
+    static final int DATA_COLUMN_PASS_EFF = 46;
+    static final int DATA_COLUMN_PASS_TOT = 50;
 }

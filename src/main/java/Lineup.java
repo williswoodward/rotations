@@ -16,12 +16,14 @@ class Lineup {
     private int[] _nextIn = new int[Config.NUM_ROTATION_SIDES];
 
     private Multimap<Player, Position> _playerPositions = HashMultimap.create();
-    private BigDecimal _multiPositionPenalty = BigDecimal.ZERO;
 
     Lineup(List<Player> players) {
         _players = players;
         _playerBuffer = new ArrayList<>(players);
-        _rotations = createRotations();
+        if (isFair()) {
+            _rotations = createRotations();
+        }
+
         _value = calculateValue();
     }
 
@@ -29,7 +31,10 @@ class Lineup {
     Lineup(Lineup lineup) {
         _players = new ArrayList<>(lineup._players);
         _playerBuffer = new ArrayList<>(lineup._players);
-        _rotations = createRotations();
+        if (isFair()) {
+            _rotations = createRotations();
+        }
+
         _value = calculateValue();
     }
 
@@ -148,8 +153,7 @@ class Lineup {
 
     private void enforceMaxMales(Rotation rotation) {
         if (Config.MINIMIZE_SWAPPING) {
-            final int femaleDivisor = Config.COURT_SIZE / (Config.COURT_SIZE - Config.MAX_MALES);
-            if (countFemales() * femaleDivisor >= _playerBuffer.size()) {
+            if (countFemales() * Config.FEMALE_DIVISOR >= _playerBuffer.size()) {
                 return;
             }
         }
@@ -205,6 +209,30 @@ class Lineup {
                 }
             }
         }
+    }
+
+    private boolean isFair() {
+        if (Config.EQUALIZE_OFF_TIME) {
+            final int numFemales = countFemales();
+            if (numFemales > 1 && numFemales * Config.FEMALE_DIVISOR < _players.size()) {
+                int[] femalePos = new int[numFemales];
+                int pos = 0;
+                for (int i = 0; i < _players.size(); i++) {
+                    if (_players.get(i).isFemale())  {
+                        femalePos[pos] = i;
+                        pos++;
+                    }
+                }
+
+                final int upperBound = _players.size() % Config.FEMALE_DIVISOR;
+                for (int i = 0; i < numFemales - 1; i++) {
+                    int spacing = femalePos[i+1] - femalePos[i];
+                    if (spacing < Config.FEMALE_DIVISOR || spacing > Config.FEMALE_DIVISOR + upperBound) return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     private int wrap(int index) {
